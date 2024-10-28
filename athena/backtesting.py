@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Dict, Any, Type, Hashable, Optional
 from math import nan, isnan
+from termcolor import colored
 import pandas as pd
 
 from .trading import Position, Trade
@@ -24,7 +25,7 @@ class Strategy(ABC):
         策略逻辑部分
         """
 
-    def __init__(self):
+    def __init__(self, group_number=None):
         # 这部分参数是靠Backtest传进来的
         self.broker: Broker = None # 控制仓位的功能
         self.data = pd.DataFrame()
@@ -32,6 +33,7 @@ class Strategy(ABC):
         self.symbols: List[str] = []
         self.records: List[Dict[Hashable, Any]] = []
         self.index: List[datetime] = []
+        self.group_number = group_number
 
         # 这些全部交给broker处理
         #self.cash = .0
@@ -87,6 +89,13 @@ class Strategy(ABC):
             self.assets_value = sum(position.current_value for position in self.broker.open_positions)
             self.broker.returns.append(self.broker.cash + self.assets_value)
 
+            print(colored("----------------------", "blue"))
+            print("🕰 date: ", self.date)
+            print("💸 cash: ", self.broker.cash)
+            print("📨 assets_value: ", self.assets_value)
+            print("📊 returns: ", self.broker.returns[-1])
+            print(colored("----------------------", "blue"))
+
         # 返回该策略的回测结果
         return Result(
             returns=pd.Series(index=self.index, data=self.broker.returns, dtype=float),
@@ -97,7 +106,7 @@ class Strategy(ABC):
 class Backtest:
 
     def __init__(self,
-                 strategy: Type[Strategy],
+                 strategy, # 这里接受的策略实例
                  data: pd.DataFrame,
                  cash: float = 10_000,
                  commission: float = .0
@@ -121,7 +130,7 @@ class Backtest:
         self.index = data.index.tolist()
 
     def run(self, *args, **kwargs):
-        strategy = self.strategy()
+        strategy = self.strategy # 不在进行实例化
 
         # 这里把backtest的参数传过去了
         strategy.data = self.data

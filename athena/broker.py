@@ -42,6 +42,9 @@ class Broker:
 
         if isnan(size) or size <= .0 or self.cash < open_cost:
             return False
+        
+        # size向下取整
+        size = int(size)
 
         # 建立一个仓位
         # 注意：建立仓位的时候需要确认仓位的多空美方向
